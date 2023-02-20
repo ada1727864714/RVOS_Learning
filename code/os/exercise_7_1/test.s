@@ -61,36 +61,36 @@ uart_init:
 	addi sp,sp,-4
 	sw s0,0(sp)
 
-#uart_write_reg(IER, 0x00);
+# uart_write_reg(IER, 0x00);
 	li a0,IER           
 	li a1,0
 	call uart_write
 
-#uint8_t lcr = uart_read_reg(LCR); s0保存lcr
+# uint8_t lcr = uart_read_reg(LCR); s0保存lcr
 	li a0,LCR
 	call uart_read
 	mv s0,a0
 
-#uart_write_reg(LCR, lcr | (1 << 7));
+# uart_write_reg(LCR, lcr | (1 << 7));
 	li a0,LCR
 	li t0,0x10000000
 	OR a1,s0,t0
 	call uart_write
 
-#uart_write_reg(DLL, 0x03);
+# uart_write_reg(DLL, 0x03);
 	li a0,DLL
 	li a1,0x03
 	call uart_write
 
-#uart_write_reg(DLM, 0x00);
+# uart_write_reg(DLM, 0x00);
 	li a0,DLM
 	li a1,0x00
 	call uart_write
 
-#lcr = 0;
+# lcr = 0;
 	li s0,0
 
-#uart_write_reg(LCR, lcr | (3 << 0));
+# uart_write_reg(LCR, lcr | (3 << 0));
 	li a0,LCR
 	li t0,0x11
 	OR a1,s0,t0
@@ -101,11 +101,12 @@ uart_init:
 	addi sp,sp,4
 	ret
 
-#int uart_putc(char ch)
-#{
-#	while ((uart_read_reg(LSR) & LSR_TX_IDLE) == 0);
-#	return uart_write_reg(THR, ch);
-#}
+# int uart_putc(char ch)
+# {
+# 	while ((uart_read_reg(LSR) & LSR_TX_IDLE) == 0);
+# 	return uart_write_reg(THR, ch);
+# }
+# 使用a1传递ch
 uart_putc:
 	addi sp,sp,-4
 	sw s0,0(sp)
@@ -117,6 +118,22 @@ loop:
 	li t0,0X100000
 	AND s0,s0,t0 
 	BEQZ s0,loop
+	
+	li a0,THR
+	call uart_write
+
+	lw s0,0(sp)
+	addi sp,sp,4
+	ret
+
+# void uart_puts(char *s)
+# {
+# 	while (*s) {
+# 		uart_putc(*s++);
+# 	}
+# }
+uart_puts:
+
 
 	
 	
