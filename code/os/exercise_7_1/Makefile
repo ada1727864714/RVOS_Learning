@@ -2,6 +2,6 @@ EXEC = test
 
 SRC = ${EXEC}.S
 
-GDBINIT = gdbinit
+GDBINIT = ../gdbinit
 
 include ../rule.mk

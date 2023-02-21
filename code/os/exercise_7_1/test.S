@@ -1,8 +1,8 @@
 #include "platform.h"
 
-.macro 
+.macro inc reg
 
-
+	addi \reg,\reg,1
 
 .endm
 
@@ -41,6 +41,7 @@ start_kernel:
 stop:
 	j stop
 
+# #define uart_read_reg(reg) (*(UART_REG(reg)))
 uart_read:                  #读UART寄存器，a0传入寄存器
 
 	li t0,UART0
@@ -49,6 +50,7 @@ uart_read:                  #读UART寄存器，a0传入寄存器
 
 	ret
 
+# #define uart_write_reg(reg, v) (*(UART_REG(reg)) = (v))
 uart_write:                  #写UART寄存器，a0传入寄存器，a1传入要写的值
 
 	li t0,UART0
@@ -59,7 +61,7 @@ uart_write:                  #写UART寄存器，a0传入寄存器，a1传入要
 	
 uart_init:
 	addi sp,sp,-4
-	sw s0,0(sp)
+	sw ra,0(sp)
 
 # uart_write_reg(IER, 0x00);
 	li a0,IER           
@@ -73,7 +75,7 @@ uart_init:
 
 # uart_write_reg(LCR, lcr | (1 << 7));
 	li a0,LCR
-	li t0,0x10000000
+	li t0,0x80
 	OR a1,s0,t0
 	call uart_write
 
@@ -92,12 +94,12 @@ uart_init:
 
 # uart_write_reg(LCR, lcr | (3 << 0));
 	li a0,LCR
-	li t0,0x11
+	li t0,3
 	OR a1,s0,t0
 	call uart_write
 
 
-	lw s0,0(sp)
+	lw ra,0(sp)
 	addi sp,sp,4
 	ret
 
@@ -108,21 +110,24 @@ uart_init:
 # }
 # 使用a1传递ch
 uart_putc:
-	addi sp,sp,-4
-	sw s0,0(sp)
+	addi sp,sp,-12
+	sw ra,0(sp)
+	sw s0,4(sp)
+	sw s1,8(sp)
 
-loop:
-	li a0,LCR
+loop_put:
+	li a0,LSR
 	call uart_read
 	mv s0,a0
-	li t0,0X100000
-	AND s0,s0,t0 
-	BEQZ s0,loop
+	andi s0,s0,0x20
+	beqz s0,loop_put
 	
 	li a0,THR
 	call uart_write
 
-	lw s0,0(sp)
+	lw s1,8(sp)
+	lw s0,4(sp)
+	lw ra,0(sp)
 	addi sp,sp,4
 	ret
 
@@ -133,10 +138,26 @@ loop:
 # 	}
 # }
 uart_puts:
+	addi sp,sp,-8
+	sw ra,0(sp)
+	sw a0,4(sp)
 
 
-	
-	
+# 加载初始值
+	lw s0,4(sp)
+
+loop_puts:
+	lb a1,0(s0)
+	beqz a1,loop_puts_end
+	call uart_putc
+	inc s0
+	j loop_puts
+loop_puts_end:
+
+	lw ra,0(sp)
+	addi sp,sp,4
+	ret
+
 
 hello_str:
 	.string "Hello,RVOS!\0"
