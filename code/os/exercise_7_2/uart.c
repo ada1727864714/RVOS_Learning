@@ -106,11 +106,8 @@ void uart_init()
 }
 
 int uart_getc(){
-	while ((uart_read_reg()))
-	{
-		/* code */
-	}
-	
+	while ((uart_read_reg(LSR)&LSR_RX_READY)==0);
+	return uart_read_reg(RHR);
 }
 
 int uart_putc(char ch)
